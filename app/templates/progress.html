@@ -1,0 +1,43 @@
+{% extends "base.html" %}
+{% block title %}Tu progreso · MatiLab{% endblock %}
+{% block content %}
+<header class="page-head">
+  <p class="eyebrow">Tu lugar en MatiLab</p>
+  <h1>Progreso</h1>
+  <p class="lede">El avance de este navegador. Si el servidor tiene Supabase, también queda guardado en la base de datos.</p>
+</header>
+<form class="profile" id="profile-form">
+  <label>
+    Nombre
+    <input id="student-name" name="name" maxlength="40" autocomplete="nickname" placeholder="Tu nombre">
+  </label>
+  <label>
+    Mi grado
+    <select id="student-grade" name="grade">
+      {% for item in grades %}
+      <option value="{{ item }}">{{ item }}.º</option>
+      {% endfor %}
+    </select>
+  </label>
+  <button class="btn primary" type="submit">Guardar</button>
+  <p id="profile-note" class="fine" role="status"></p>
+</form>
+<p id="storage-note" class="fine"></p>
+<div class="progress-grid">
+  {% for module in modules %}
+  <section class="rep-card" data-module="{{ module.slug }}">
+    <h2>{{ module.title }}</h2>
+    <div class="bar" aria-hidden="true"><span data-bar></span></div>
+    <p data-module-label class="meta">0 de {{ module.lessons|length }} lecciones</p>
+    <ol>
+      {% for lesson in module.lessons %}
+      <li data-lesson="{{ lesson.id }}" data-total="{{ lesson.problem_count }}">
+        <a href="/leccion/{{ lesson.id }}{{ grade_qs }}">{{ lesson.title }}</a>
+        <span data-status>{{ lesson.grade_label }}</span>
+      </li>
+      {% endfor %}
+    </ol>
+  </section>
+  {% endfor %}
+</div>
+{% endblock %}

@@ -1,0 +1,34 @@
+{% extends "base.html" %}
+{% from "illustrations.html" import art %}
+{% block title %}{{ module.title }} · MatiLab{% endblock %}
+{% block content %}
+<header class="course-hero tint-{{ module.tint }}">
+  <div>
+    <p class="eyebrow"><a href="/{{ grade_qs }}">Módulos</a> · Módulo {{ module.number }}</p>
+    <h1>{{ module.title }}</h1>
+    <p class="lede">{{ module.blurb }}</p>
+    <p class="meta">{{ lessons|length }} lecciones{% if grade %} de {{ grade }}.º{% else %} · {{ module.grade_label }}{% endif %}</p>
+  </div>
+  <div class="topic-art">{{ art(module.slug) }}</div>
+</header>
+{% if not lessons %}
+<p class="empty-note">Este grado no tiene lecciones en {{ module.title }}. Prueba con Todos.</p>
+{% endif %}
+<ol class="lesson-path">
+  {% for lesson in lessons %}
+  <li data-lesson="{{ lesson.id }}" data-total="{{ lesson.problems|length }}">
+    <a href="/leccion/{{ lesson.id }}{{ grade_qs }}">
+      <span class="path-index">{{ loop.index }}</span>
+      <span>
+        <strong>{{ lesson.title }}</strong>
+        <small>{{ lesson.summary }}</small>
+      </span>
+      <span class="path-meta">
+        <span>{{ lesson.grade_label }}</span>
+        <span data-status>{{ lesson.problems|length }} prácticas</span>
+      </span>
+    </a>
+  </li>
+  {% endfor %}
+</ol>
+{% endblock %}

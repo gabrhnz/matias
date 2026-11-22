@@ -1,0 +1,92 @@
+{% extends "base.html" %}
+{% from "illustrations.html" import art %}
+{% block title %}MatiLab · Matemáticas de primaria{% endblock %}
+{% block content %}
+<section class="hero">
+  <div class="hero-copy">
+    <p class="eyebrow">Primaria · 3.º a 6.º</p>
+    <h1>Aprende matemáticas haciendo</h1>
+    <p class="lede">Cuatro módulos cortos. Una idea clara, un ejemplo y práctica con la razón de la respuesta.</p>
+    <div class="hero-actions">
+      <a class="btn primary" href="{{ start_url }}">Empezar a practicar</a>
+      <a class="btn quiet" href="#repertorio">Ver el repertorio</a>
+    </div>
+    <p class="fine">La primera lección{% if grade %} de {{ grade }}.º{% endif %} es {{ start_title }}, en {{ start_module }}.</p>
+  </div>
+  <div class="preview" aria-hidden="true">
+    <p class="preview-kicker">Práctica</p>
+    <p class="preview-prompt">¿Cuánto es 2 + 5 × 2?</p>
+    <div class="preview-choices">
+      <span>14</span>
+      <span class="is-right">12</span>
+      <span>9</span>
+    </div>
+    <p class="preview-note">Primero se multiplica. 5 × 2 = 10, y 2 + 10 = 12.</p>
+  </div>
+</section>
+
+<section class="section" aria-labelledby="modulos-titulo">
+  <div class="section-head">
+    <h2 id="modulos-titulo">Módulos</h2>
+    <p>{% if grade %}Lecciones pensadas para {{ grade }}.º.{% else %}Elige un tema y entra a una lección corta.{% endif %}</p>
+  </div>
+  <div class="topics">
+    {% for module in modules %}
+    <a class="topic-card tint-{{ module.tint }}" href="/modulos/{{ module.slug }}{{ grade_qs }}">
+      <div>
+        <p class="eyebrow">Módulo {{ module.number }}</p>
+        <h3>{{ module.title }}</h3>
+        <p>{{ module.blurb }}</p>
+        <p class="meta">{{ module.lesson_count }} lecciones · {{ module.grade_label }}</p>
+      </div>
+      <div class="topic-art">{{ art(module.slug) }}</div>
+    </a>
+    {% endfor %}
+  </div>
+</section>
+
+<section class="section" aria-labelledby="como-titulo">
+  <h2 id="como-titulo">Así es una lección</h2>
+  <div class="steps">
+    <article class="step tint-peach">
+      <p class="step-num">1</p>
+      <h3>Una idea</h3>
+      <p>Una explicación corta y un ejemplo ya resuelto.</p>
+    </article>
+    <article class="step tint-blue">
+      <p class="step-num">2</p>
+      <h3>Práctica</h3>
+      <p>Una pregunta a la vez. Puedes pedir una pista.</p>
+    </article>
+    <article class="step tint-green">
+      <p class="step-num">3</p>
+      <h3>La razón</h3>
+      <p>La respuesta llega al instante, con la cuenta explicada.</p>
+    </article>
+  </div>
+</section>
+
+<section class="section" id="repertorio" aria-labelledby="repertorio-titulo">
+  <div class="section-head">
+    <h2 id="repertorio-titulo">Repertorio</h2>
+    <p>Todo lo que se puede practicar hoy{% if grade %}, filtrado para {{ grade }}.º{% endif %}.</p>
+  </div>
+  <div class="repertoire">
+    {% for module in modules %}
+    <article class="rep-card">
+      <h3><a href="/modulos/{{ module.slug }}{{ grade_qs }}">{{ module.title }}</a></h3>
+      <ol>
+        {% for lesson in module.lessons %}
+        <li>
+          <a href="/leccion/{{ lesson.id }}{{ grade_qs }}">{{ lesson.title }}</a>
+          <span>{{ lesson.grade_label }}</span>
+        </li>
+        {% else %}
+        <li class="empty">No hay lecciones de este grado en el módulo.</li>
+        {% endfor %}
+      </ol>
+    </article>
+    {% endfor %}
+  </div>
+</section>
+{% endblock %}

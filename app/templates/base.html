@@ -1,0 +1,53 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>{% block title %}MatiLab{% endblock %}</title>
+  <meta name="description" content="MatiLab: práctica de matemáticas para 3.º a 6.º grado. Aritmética, fracciones, geometría y razonamiento.">
+  <meta name="theme-color" content="#f5f3f1">
+  <link rel="icon" href="/favicon.svg" type="image/svg+xml">
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
+  <link rel="stylesheet" href="/css/app.css?v=1">
+</head>
+<body>
+  <a class="skip" href="#contenido">Saltar al contenido</a>
+  <div class="nav-wrap">
+    <nav class="nav" aria-label="Principal">
+      <a class="brand" href="/{{ grade_qs }}">
+        <span class="mark" aria-hidden="true">
+          <svg viewBox="0 0 32 32"><rect width="32" height="32" rx="10" fill="#29cc57"/><path d="M16 8v16M8 16h16" stroke="#fff" stroke-width="2.6" stroke-linecap="round"/></svg>
+        </span>
+        MatiLab
+      </a>
+      <div class="nav-links">
+        <a class="{% if page == 'home' %}is-current{% endif %}" href="/{{ grade_qs }}">Módulos</a>
+        <a class="{% if page == 'progress' %}is-current{% endif %}" href="/progreso{{ grade_qs }}">Progreso</a>
+      </div>
+      <form class="grade-form" method="get" action="{{ grade_action }}">
+        <label class="sr" for="grado">Filtrar por grado</label>
+        <select id="grado" name="grado" aria-label="Filtrar por grado" onchange="this.form.submit()">
+          <option value="" {% if not grade %}selected{% endif %}>Todos</option>
+          {% for item in grades %}
+          <option value="{{ item }}" {% if grade == item %}selected{% endif %}>{{ item }}.º</option>
+          {% endfor %}
+        </select>
+      </form>
+    </nav>
+  </div>
+  <main id="contenido">
+    {% block content %}{% endblock %}
+  </main>
+  <footer class="footer">
+    <div>
+      <strong>MatiLab</strong>
+      <p>Matemáticas de 3.º a 6.º, una idea a la vez.</p>
+    </div>
+    <p>{{ numbers.modules }} módulos · {{ numbers.lessons }} lecciones · {{ numbers.problems }} prácticas</p>
+  </footer>
+  <script src="/js/app.js"></script>
+  {% block scripts %}{% endblock %}
+</body>
+</html>

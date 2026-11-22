@@ -1,0 +1,31 @@
+{% macro art(name) %}
+<svg viewBox="0 0 280 180" role="img" aria-hidden="true">
+  {% if name == "aritmetica" %}
+  <rect x="28" y="48" width="46" height="46" rx="12" fill="#fff"/>
+  <rect x="82" y="48" width="46" height="46" rx="12" fill="#fff"/>
+  <rect x="28" y="102" width="46" height="46" rx="12" fill="#27455c"/>
+  <rect x="82" y="102" width="46" height="46" rx="12" fill="#fff"/>
+  <circle cx="196" cy="90" r="42" fill="#29cc57"/>
+  <path d="M196 72v36M178 90h36" stroke="#fff" stroke-width="6" stroke-linecap="round"/>
+  {% elif name == "fracciones" %}
+  <circle cx="108" cy="90" r="62" fill="#fff"/>
+  <path d="M108 90 L108 28 A62 62 0 0 1 162 121 Z" fill="#3860be"/>
+  <circle cx="108" cy="90" r="18" fill="#f0f8fa"/>
+  <rect x="188" y="46" width="58" height="18" rx="9" fill="#fff"/>
+  <rect x="188" y="74" width="44" height="18" rx="9" fill="#3860be"/>
+  <rect x="188" y="102" width="58" height="18" rx="9" fill="#fff"/>
+  {% elif name == "geometria" %}
+  <circle cx="78" cy="96" r="42" fill="#fff"/>
+  <rect x="112" y="58" width="78" height="62" rx="10" fill="#27455c"/>
+  <path d="M176 132 L232 132 L204 62 Z" fill="#29cc57"/>
+  {% elif name == "logica" %}
+  <path d="M46 124 C80 40, 120 40, 140 90 S200 150, 236 58" fill="none" stroke="#27455c" stroke-width="8" stroke-linecap="round"/>
+  <circle cx="46" cy="124" r="12" fill="#fff"/>
+  <circle cx="140" cy="90" r="12" fill="#29cc57"/>
+  <circle cx="236" cy="58" r="12" fill="#fff"/>
+  {% else %}
+  <circle cx="140" cy="90" r="48" fill="#29cc57"/>
+  <path d="M140 66v48M116 90h48" stroke="#fff" stroke-width="8" stroke-linecap="round"/>
+  {% endif %}
+</svg>
+{% endmacro %}
