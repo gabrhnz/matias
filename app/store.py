@@ -1,8 +1,11 @@
-"""Progreso del estudiante.
+"""Progreso y racha del estudiante.
 
 Si existen SUPABASE_URL y SUPABASE_SERVICE_ROLE_KEY, el progreso se guarda en
 Postgres. Si no, se guarda en la memoria de este proceso. El navegador además
 conserva una copia, así la práctica no se pierde al recargar.
+
+La racha cuenta un día cuando el estudiante responde al menos una práctica.
+El día cambia a medianoche en Venezuela (UTC−4).
 """
 
 from __future__ import annotations
@@ -11,7 +14,8 @@ import logging
 import os
 import re
 import threading
-from datetime import datetime, timezone
+import uuid
+from datetime import datetime, timedelta, timezone
 
 import httpx
 
@@ -19,6 +23,7 @@ from app.catalog import lesson_by_id
 
 logger = logging.getLogger("matilab")
 
+CARACAS = timezone(timedelta(hours=-4))
 _UUID = re.compile(
     r"^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$",
     re.IGNORECASE,
@@ -37,8 +42,31 @@ def clean_name(name: str | None) -> str:
     return cleaned[:40] or "Estudiante"
 
 
+def clean_label(value: str | None, limit: int = 60) -> str:
+    if not value:
+        return ""
+    cleaned = " ".join(value.split())
+    cleaned = "".join(char for char in cleaned if char.isprintable())
+    return cleaned[:limit]
+
+
 def clean_grade(grade: int | None) -> int:
     return grade if grade in (3, 4, 5, 6) else 4
+
+
+def today_iso() -> str:
+    return datetime.now(CARACAS).date().isoformat()
+
+
+def day_before(day: str) -> str:
+    year, month, number = (int(part) for part in day.split("-"))
+    return (datetime(year, month, number) - timedelta(days=1)).date().isoformat()
+
+
+def _day(value) -> str | None:
+    if not value:
+        return None
+    return str(value)[:10]
 
 
 class Store:
@@ -65,13 +93,64 @@ class Store:
             self.students.clear()
             self.progress.clear()
 
-    def upsert_student(self, student_id: str, name: str | None, grade: int | None) -> dict:
+    def find_email(self, email: str) -> dict | None:
+        with self.lock:
+            for student in self.students.values():
+                if student.get("email") == email:
+                    return dict(student)
+        return None
+
+    def account_for_email(self, email: str, suggested_name: str, preferred_id: str | None = None) -> dict:
+        if preferred_id is None:
+            found = self.find_email(email)
+            if found:
+                return self.upsert_student(found["id"], found["name"], found.get("grade"), email=email)["student"]
+            preferred_id = str(uuid.uuid4())
+        return self.ensure_account(preferred_id, email, suggested_name)
+
+    def ensure_account(self, student_id: str, email: str, suggested_name: str) -> dict:
+        current = None
+        if self.enabled:
+            try:
+                current = self._read_remote(student_id).get("student")
+            except Exception:
+                logger.warning("Supabase no devolvió la cuenta; se usa el modo local")
+        if current is None:
+            with self.lock:
+                current = self.students.get(student_id)
+        if current:
+            with self.lock:
+                self.students[student_id] = dict(current)
+            return self.upsert_student(
+                student_id,
+                current.get("name") or suggested_name,
+                current.get("grade"),
+                email=email,
+            )["student"]
+        return self.upsert_student(student_id, suggested_name, 4, email=email)["student"]
+
+    def upsert_student(
+        self,
+        student_id: str,
+        name: str | None,
+        grade: int | None,
+        email: str | None = None,
+        guardian_name: str | None = None,
+        school: str | None = None,
+    ) -> dict:
         if not valid_student_id(student_id):
             raise ValueError("El código del estudiante no es válido")
+        with self.lock:
+            previous = dict(self.students.get(student_id) or {})
         student = {
             "id": student_id,
             "name": clean_name(name),
-            "grade": clean_grade(grade),
+            "grade": clean_grade(grade if grade is not None else previous.get("grade")),
+            "email": email or previous.get("email"),
+            "guardian_name": clean_label(guardian_name) if guardian_name is not None else (previous.get("guardian_name") or ""),
+            "school": clean_label(school, 80) if school is not None else (previous.get("school") or ""),
+            "streak": int(previous.get("streak") or 0),
+            "last_active": previous.get("last_active"),
         }
         if self.enabled:
             try:
@@ -98,14 +177,15 @@ class Store:
         if lesson is None or not any(problem.id == problem_id for problem in lesson.problems):
             raise ValueError("La práctica no existe")
         self.upsert_student(student_id, name, grade)
+        streak = self._touch_streak(student_id)
         if self.enabled:
             try:
                 state = self._record_remote(student_id, lesson_id, problem_id, correct)
-                return {"lesson": state, "storage": "supabase", "degraded": False}
+                return {"lesson": state, "storage": "supabase", "degraded": False, "streak": streak}
             except Exception:
                 logger.warning("Supabase no guardó el progreso; se usa el modo local")
         state = self._record_memory(student_id, lesson_id, problem_id, correct)
-        return {"lesson": state, "storage": "local", "degraded": self.enabled}
+        return {"lesson": state, "storage": "local", "degraded": self.enabled, "streak": streak}
 
     def get_progress(self, student_id: str) -> dict:
         if not valid_student_id(student_id):
@@ -123,11 +203,45 @@ class Store:
             for lesson_id, row in raw.items()
         }
         return {
-            "student": student,
+            "student": dict(student) if student else None,
             "lessons": lessons,
             "storage": "local",
             "degraded": self.enabled,
         }
+
+    def _touch_streak(self, student_id: str) -> int:
+        today = today_iso()
+        with self.lock:
+            student = self.students.get(student_id)
+            if student is None:
+                student = {
+                    "id": student_id,
+                    "name": "Estudiante",
+                    "grade": 4,
+                    "email": None,
+                    "guardian_name": "",
+                    "school": "",
+                    "streak": 0,
+                    "last_active": None,
+                }
+                self.students[student_id] = student
+            last = _day(student.get("last_active"))
+            current = int(student.get("streak") or 0)
+            if last == today:
+                streak = current if current > 0 else 1
+            elif last == day_before(today):
+                streak = current + 1
+            else:
+                streak = 1
+            student["streak"] = streak
+            student["last_active"] = today
+            snapshot = dict(student)
+        if self.enabled:
+            try:
+                self._upsert_remote_student(snapshot)
+            except Exception:
+                logger.warning("Supabase no guardó la racha; se usa el modo local")
+        return streak
 
     def _record_memory(self, student_id: str, lesson_id: str, problem_id: str, correct: bool) -> dict:
         with self.lock:
@@ -179,14 +293,24 @@ class Store:
         return response.json()
 
     def _upsert_remote_student(self, student: dict) -> None:
+        body = {
+            "id": student["id"],
+            "display_name": student["name"],
+            "grade": student["grade"],
+            "streak": int(student.get("streak") or 0),
+        }
+        if student.get("email"):
+            body["email"] = student["email"]
+        if student.get("guardian_name"):
+            body["guardian_name"] = student["guardian_name"]
+        if student.get("school"):
+            body["school"] = student["school"]
+        if student.get("last_active"):
+            body["last_active"] = student["last_active"]
         self._request(
             "POST",
             "/rest/v1/students?on_conflict=id",
-            {
-                "id": student["id"],
-                "display_name": student["name"],
-                "grade": student["grade"],
-            },
+            body,
             prefer="resolution=merge-duplicates,return=minimal",
         )
 
@@ -219,7 +343,7 @@ class Store:
     def _read_remote(self, student_id: str) -> dict:
         students = self._request(
             "GET",
-            f"/rest/v1/students?id=eq.{student_id}&select=id,display_name,grade",
+            f"/rest/v1/students?id=eq.{student_id}&select=id,display_name,grade,email,guardian_name,school,streak,last_active",
         ) or []
         rows = self._request(
             "GET",
@@ -228,14 +352,25 @@ class Store:
         lessons = {}
         for row in rows:
             state = self._shape(row["lesson_id"], set(row.get("solved") or []), set(row.get("correct") or []))
-            lessons[row["lesson_id"]] = {"solved": state["solved"], "correct": state["correct"], "completed": state["completed"]}
+            lessons[row["lesson_id"]] = {
+                "solved": state["solved"],
+                "correct": state["correct"],
+                "completed": state["completed"],
+            }
         student = None
         if students:
             student = {
                 "id": students[0]["id"],
                 "name": students[0]["display_name"],
                 "grade": students[0]["grade"],
+                "email": students[0].get("email"),
+                "guardian_name": students[0].get("guardian_name") or "",
+                "school": students[0].get("school") or "",
+                "streak": int(students[0].get("streak") or 0),
+                "last_active": _day(students[0].get("last_active")),
             }
+            with self.lock:
+                self.students[student_id] = student
         return {"student": student, "lessons": lessons}
 
 

@@ -4,30 +4,42 @@
 {% block content %}
 <header class="course-hero tint-{{ module.tint }}">
   <div>
-    <p class="eyebrow"><a href="/{{ grade_qs }}">Módulos</a> · Módulo {{ module.number }}</p>
+    <p class="eyebrow"><a href="/">Módulos</a>{% if viewer %} · {{ viewer.grade }}.º{% endif %}</p>
     <h1>{{ module.title }}</h1>
-    <p class="lede">{{ module.blurb }}</p>
-    <p class="meta">{{ lessons|length }} lecciones{% if grade %} de {{ grade }}.º{% else %} · {{ module.grade_label }}{% endif %}</p>
+    {% if viewer and others %}
+    <p class="path-switch">
+      {% if repaso %}
+      <a href="/modulos/{{ module.slug }}?repaso=0">Volver a {{ viewer.grade }}.º</a>
+      {% else %}
+      <a href="/modulos/{{ module.slug }}?repaso=1">Ver otros grados</a>
+      {% endif %}
+    </p>
+    {% endif %}
   </div>
   <div class="topic-art">{{ art(module.slug) }}</div>
 </header>
 {% if not lessons %}
-<p class="empty-note">Este grado no tiene lecciones en {{ module.title }}. Prueba con Todos.</p>
+<p class="empty-note">Este grado no tiene lecciones en {{ module.title }}.</p>
 {% endif %}
 <ol class="lesson-path">
   {% for lesson in lessons %}
-  <li data-lesson="{{ lesson.id }}" data-total="{{ lesson.problems|length }}">
-    <a href="/leccion/{{ lesson.id }}{{ grade_qs }}">
+  {% set mine = not viewer or viewer.grade in lesson.grades %}
+  <li class="{% if not mine and not repaso %}is-locked{% elif not mine %}is-extra{% endif %}" data-lesson="{{ lesson.id }}" data-total="{{ lesson.problems|length }}">
+    {% if mine or repaso %}
+    <a href="/leccion/{{ lesson.id }}{% if not mine %}?repaso=1{% endif %}">
       <span class="path-index">{{ loop.index }}</span>
-      <span>
-        <strong>{{ lesson.title }}</strong>
-        <small>{{ lesson.summary }}</small>
-      </span>
-      <span class="path-meta">
-        <span>{{ lesson.grade_label }}</span>
-        <span data-status>{{ lesson.problems|length }} prácticas</span>
-      </span>
+      <strong>{{ lesson.title }}</strong>
+      <span class="path-meta"><span data-status>{% if not mine %}Repaso{% endif %}</span></span>
     </a>
+    {% else %}
+    <div class="lesson-lock">
+      <span class="path-index" aria-hidden="true">
+        <svg viewBox="0 0 24 24"><rect x="5" y="10" width="14" height="10" rx="2" fill="none" stroke="currentColor" stroke-width="2"/><path d="M8 10V7a4 4 0 0 1 8 0v3" fill="none" stroke="currentColor" stroke-width="2"/></svg>
+      </span>
+      <strong>{{ lesson.title }}</strong>
+      <span class="path-meta">Bloqueada</span>
+    </div>
+    {% endif %}
   </li>
   {% endfor %}
 </ol>

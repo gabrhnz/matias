@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=1">
+  <link rel="stylesheet" href="/css/app.css?v=7">
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
@@ -24,30 +24,23 @@
       </a>
       <div class="nav-links">
         <a class="{% if page == 'home' %}is-current{% endif %}" href="/{{ grade_qs }}">Módulos</a>
-        <a class="{% if page == 'progress' %}is-current{% endif %}" href="/progreso{{ grade_qs }}">Progreso</a>
+        <a class="{% if page == 'progress' %}is-current{% endif %}" href="/progreso">Mi progreso</a>
       </div>
-      <form class="grade-form" method="get" action="{{ grade_action }}">
-        <label class="sr" for="grado">Filtrar por grado</label>
-        <select id="grado" name="grado" aria-label="Filtrar por grado" onchange="this.form.submit()">
-          <option value="" {% if not grade %}selected{% endif %}>Todos</option>
-          {% for item in grades %}
-          <option value="{{ item }}" {% if grade == item %}selected{% endif %}>{{ item }}.º</option>
-          {% endfor %}
-        </select>
-      </form>
+      <a class="streak {% if viewer and viewer.streak %}is-live{% else %}is-idle{% endif %}" id="streak-link" href="{% if viewer %}/progreso{% else %}/entrar{% endif %}" aria-label="{% if viewer %}Racha de {{ viewer.streak }} días{% else %}Entrar{% endif %}">
+        <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c1 3 1.2 4.6-.2 6.4 1.6-.4 2.7-1.6 3.2-3.2 2.2 1.6 3.5 4 3.5 6.6A6.5 6.5 0 1 1 8.2 6.2C9.4 7.6 10.2 8.4 10.6 9.6 10.2 7.2 11 4.2 12 2z"/></svg>
+        <span id="streak-count">{% if viewer %}{{ viewer.streak }}{% else %}Entrar{% endif %}</span>
+      </a>
     </nav>
   </div>
   <main id="contenido">
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">
-    <div>
-      <strong>MatiLab</strong>
-      <p>Matemáticas de 3.º a 6.º, una idea a la vez.</p>
-    </div>
+    <strong>MatiLab</strong>
     <p>{{ numbers.modules }} módulos · {{ numbers.lessons }} lecciones · {{ numbers.problems }} prácticas</p>
   </footer>
-  <script src="/js/app.js"></script>
+  <script id="session-data" type="application/json">{{ viewer | tojson }}</script>
+  <script src="/js/app.js?v=5"></script>
   {% block scripts %}{% endblock %}
 </body>
 </html>

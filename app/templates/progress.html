@@ -1,43 +1,74 @@
 {% extends "base.html" %}
-{% block title %}Tu progreso · MatiLab{% endblock %}
+{% block title %}Mi progreso · MatiLab{% endblock %}
 {% block content %}
-<header class="page-head">
-  <p class="eyebrow">Tu lugar en MatiLab</p>
-  <h1>Progreso</h1>
-  <p class="lede">El avance de este navegador. Si el servidor tiene Supabase, también queda guardado en la base de datos.</p>
-</header>
-<form class="profile" id="profile-form">
-  <label>
-    Nombre
-    <input id="student-name" name="name" maxlength="40" autocomplete="nickname" placeholder="Tu nombre">
-  </label>
-  <label>
-    Mi grado
-    <select id="student-grade" name="grade">
-      {% for item in grades %}
-      <option value="{{ item }}">{{ item }}.º</option>
-      {% endfor %}
-    </select>
-  </label>
-  <button class="btn primary" type="submit">Guardar</button>
-  <p id="profile-note" class="fine" role="status"></p>
-</form>
-<p id="storage-note" class="fine"></p>
-<div class="progress-grid">
-  {% for module in modules %}
-  <section class="rep-card" data-module="{{ module.slug }}">
-    <h2>{{ module.title }}</h2>
-    <div class="bar" aria-hidden="true"><span data-bar></span></div>
-    <p data-module-label class="meta">0 de {{ module.lessons|length }} lecciones</p>
-    <ol>
-      {% for lesson in module.lessons %}
-      <li data-lesson="{{ lesson.id }}" data-total="{{ lesson.problem_count }}">
-        <a href="/leccion/{{ lesson.id }}{{ grade_qs }}">{{ lesson.title }}</a>
-        <span data-status>{{ lesson.grade_label }}</span>
-      </li>
-      {% endfor %}
-    </ol>
-  </section>
-  {% endfor %}
-</div>
+<section id="dash-out" class="auth-card" {% if viewer %}hidden{% endif %}>
+  <h1>Mi progreso</h1>
+  <p class="quiet-copy">Entra con tu correo para guardar tu racha.</p>
+  <a class="btn primary" href="/entrar">Entrar</a>
+</section>
+
+<section id="dash-in" {% if not viewer %}hidden{% endif %}>
+  <div class="dash-top">
+    <div class="dash-hello">
+      <h1 id="dash-name">Hola{% if viewer %}, {{ viewer.name }}{% endif %}</h1>
+      <p class="quiet-copy" id="dash-meta">{% if viewer %}{% if viewer.guardian_name %}{{ viewer.guardian_name }} · {% endif %}{{ viewer.email }}{% if viewer.school %} · {{ viewer.school }}{% endif %}{% endif %}</p>
+      <a class="btn primary" id="continue-link" href="/">Seguir practicando</a>
+    </div>
+    <div class="dash-streak-card">
+      <svg class="dash-fire" viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c1 3 1.2 4.6-.2 6.4 1.6-.4 2.7-1.6 3.2-3.2 2.2 1.6 3.5 4 3.5 6.6A6.5 6.5 0 1 1 8.2 6.2C9.4 7.6 10.2 8.4 10.6 9.6 10.2 7.2 11 4.2 12 2z"/></svg>
+      <p class="dash-days" id="dash-days">{{ viewer.streak if viewer else 0 }}</p>
+      <p class="quiet-copy" id="dash-streak-label">{% if viewer and viewer.streak == 1 %}día seguido{% else %}días seguidos{% endif %}</p>
+    </div>
+  </div>
+
+  <div class="dash-stats">
+    <article><strong id="stat-lessons">0</strong><span>lecciones</span></article>
+    <article><strong id="stat-correct">0</strong><span>aciertos</span></article>
+    <article><strong id="stat-solved">0</strong><span>prácticas</span></article>
+  </div>
+
+  <div class="progress-grid" id="dash-lessons">
+    {% for module in modules %}
+    <section class="rep-card" data-module="{{ module.slug }}">
+      <h3><a href="/modulos/{{ module.slug }}">{{ module.title }}</a></h3>
+      <div class="bar" aria-hidden="true"><span data-bar></span></div>
+      <p data-module-label class="meta">0 de {{ module.lessons|length }}</p>
+      <ol hidden>
+        {% for lesson in module.lessons %}
+        <li data-lesson="{{ lesson.id }}" data-total="{{ lesson.problem_count }}" data-grades="{{ lesson.grades | join(',') }}" data-program="{{ 0 if viewer and viewer.grade not in lesson.grades else 1 }}">
+          <a href="/leccion/{{ lesson.id }}">{{ lesson.title }}</a>
+          <span data-status></span>
+        </li>
+        {% endfor %}
+      </ol>
+    </section>
+    {% endfor %}
+  </div>
+
+  <form class="profile" id="profile-form">
+    <label>
+      Representante
+      <input id="guardian-name" name="guardian" maxlength="60" autocomplete="name" value="{{ viewer.guardian_name if viewer else '' }}">
+    </label>
+    <label>
+      Estudiante
+      <input id="student-name" name="name" maxlength="40" autocomplete="off" placeholder="Nombre" value="{{ viewer.name if viewer else '' }}">
+    </label>
+    <label>
+      Grado
+      <select id="student-grade" name="grade">
+        {% for item in grades %}
+        <option value="{{ item }}" {% if viewer and viewer.grade == item %}selected{% endif %}>{{ item }}.º</option>
+        {% endfor %}
+      </select>
+    </label>
+    <label>
+      Institución
+      <input id="school" name="school" maxlength="80" value="{{ viewer.school if viewer else '' }}">
+    </label>
+    <button class="btn primary" type="submit">Guardar</button>
+    <p id="profile-note" class="fine" role="status"></p>
+  </form>
+  <button class="btn quiet" type="button" id="logout-btn">Salir</button>
+</section>
 {% endblock %}

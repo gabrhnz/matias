@@ -9,6 +9,8 @@ from __future__ import annotations
 import re
 from dataclasses import dataclass
 
+from app.visuals import apply_figures
+
 GRADES = (3, 4, 5, 6)
 
 _FRACTIONS = str.maketrans(
@@ -33,6 +35,7 @@ class Problem:
     hint: str
     choices: tuple[tuple[str, str], ...] = ()
     answers: tuple[str, ...] = ()
+    scene: dict | None = None
 
 
 @dataclass(frozen=True)
@@ -45,6 +48,7 @@ class Lesson:
     example_prompt: str
     example_work: str
     problems: tuple[Problem, ...]
+    example_scene: dict | None = None
 
     @property
     def grade_label(self) -> str:
@@ -137,6 +141,8 @@ def _validate(modules: tuple[Module, ...]) -> None:
             for problem in lesson.problems:
                 if not problem.explain or not problem.prompt:
                     raise ValueError(f"{problem.id} está incompleto")
+                if module.slug in {"fracciones", "geometria"} and problem.scene is None:
+                    raise ValueError(f"{problem.id} necesita una figura")
                 if problem.kind == "choice":
                     labels = [label for _, label in problem.choices]
                     if len(labels) < 2 or len(set(labels)) != len(labels):
@@ -669,6 +675,7 @@ MODULES: tuple[Module, ...] = (
     ),
 )
 
+MODULES = apply_figures(MODULES)
 _validate(MODULES)
 
 LESSONS: dict[str, tuple[Module, Lesson]] = {
@@ -730,6 +737,8 @@ def public_problem(problem: Problem) -> dict:
     }
     if problem.kind == "choice":
         data["choices"] = [{"id": choice_id, "label": label} for choice_id, label in problem.choices]
+    if problem.scene:
+        data["scene"] = problem.scene
     return data
 
 

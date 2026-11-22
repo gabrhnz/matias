@@ -1,0 +1,51 @@
+{% extends "base.html" %}
+{% block title %}Entrar · MatiLab{% endblock %}
+{% block content %}
+<section class="auth-card wide">
+  <h1 id="auth-title">Crear cuenta</h1>
+  <form id="register-form">
+    <div class="field-group">
+      <p class="group-label">Representante</p>
+      <label class="stack" for="guardian-name">Nombre</label>
+      <input id="guardian-name" name="guardian" maxlength="60" autocomplete="name" required placeholder="Nombre y apellido">
+      <label class="stack" for="email">Correo</label>
+      <input id="email" type="email" autocomplete="email" inputmode="email" required placeholder="correo@ejemplo.com">
+      <p class="quiet-copy">El código llega a este correo.</p>
+    </div>
+    <div class="field-group">
+      <p class="group-label">Estudiante</p>
+      <label class="stack" for="student-name">Nombre</label>
+      <input id="student-name" maxlength="40" autocomplete="off" required placeholder="Nombre del estudiante">
+      <label class="stack" for="grade">Grado</label>
+      <select id="grade" required>
+        <option value="" selected disabled>Elige el grado</option>
+        {% for item in grades %}
+        <option value="{{ item }}">{{ item }}.º</option>
+        {% endfor %}
+      </select>
+      <label class="stack" for="school">Institución</label>
+      <input id="school" maxlength="80" required placeholder="Escuela o liceo">
+    </div>
+    <button class="btn primary" type="submit">Enviar código</button>
+  </form>
+  <form id="return-form" hidden>
+    <label class="stack" for="return-email">Correo del representante</label>
+    <input id="return-email" type="email" autocomplete="email" inputmode="email" required placeholder="correo@ejemplo.com">
+    <button class="btn primary" type="submit">Enviar código</button>
+  </form>
+  <form id="code-form" hidden>
+    <label class="stack" for="code">Código del correo</label>
+    <input id="code" type="text" inputmode="numeric" autocomplete="one-time-code" maxlength="8" required placeholder="000000">
+    <p id="preview" class="code-preview" hidden>Tu código es <strong id="preview-code"></strong></p>
+    <div class="practice-actions">
+      <button class="btn quiet" type="button" id="back-email">Atrás</button>
+      <button class="btn primary" type="submit">Entrar</button>
+    </div>
+  </form>
+  <button class="text-link" type="button" id="switch-mode">Ya entré antes</button>
+  <p id="auth-note" class="quiet-copy" hidden></p>
+</section>
+{% endblock %}
+{% block scripts %}
+<script src="/js/entrar.js?v=5"></script>
+{% endblock %}

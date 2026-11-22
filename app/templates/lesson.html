@@ -1,27 +1,42 @@
 {% extends "base.html" %}
 {% block title %}{{ lesson.title }} · MatiLab{% endblock %}
 {% block content %}
+{% if locked %}
+<section class="page-head">
+  <p class="eyebrow"><a href="/modulos/{{ module.slug }}">{{ module.title }}</a></p>
+  <h1>{{ lesson.title }}</h1>
+  <p class="quiet-copy">No está en {{ viewer.grade }}.º.</p>
+  <div class="hero-actions">
+    <a class="btn primary" href="?repaso=1">Verla igual</a>
+    <a class="btn quiet" href="/modulos/{{ module.slug }}">Volver</a>
+  </div>
+</section>
+{% else %}
 <article class="lesson-layout">
   <aside class="idea-card">
-    <p class="eyebrow"><a href="/modulos/{{ module.slug }}{{ grade_qs }}">{{ module.title }}</a> · {{ lesson.grade_label }}</p>
+    <p class="eyebrow"><a href="/modulos/{{ module.slug }}{{ grade_qs }}">{{ module.title }}</a></p>
     <h1>{{ lesson.title }}</h1>
-    <p>{{ lesson.idea }}</p>
     <div class="example">
-      <p class="example-label">Ejemplo</p>
+      <div id="example-figure" class="example-figure" hidden></div>
       <p class="example-prompt">{{ lesson.example_prompt }}</p>
-      <p>{{ lesson.example_work }}</p>
     </div>
+    <details class="idea-more">
+      <summary>Ver la idea</summary>
+      <p>{{ lesson.idea }}</p>
+      <p>{{ lesson.example_work }}</p>
+    </details>
   </aside>
   <section class="practice" id="practice" aria-labelledby="prompt">
     <div class="practice-top">
       <p id="step-label">Práctica 1 de {{ lesson.problems|length }}</p>
       <div class="bar" aria-hidden="true"><span id="step-bar"></span></div>
     </div>
+    <div id="figure" class="figure" hidden></div>
     <h2 id="prompt" class="prompt" tabindex="-1"></h2>
     <div id="choices" class="choices"></div>
     <label class="number-field" id="number-field" hidden>
       <span class="sr">Tu respuesta</span>
-      <input id="number-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Escribe un número o una fracción, como 3/5">
+      <input id="number-input" type="text" inputmode="text" autocomplete="off" spellcheck="false" placeholder="Tu respuesta">
     </label>
     <div class="practice-actions">
       <button type="button" class="btn quiet" id="hint-btn">Pista</button>
@@ -46,5 +61,11 @@
 </article>
 <noscript><p class="empty-note">Para comprobar las respuestas necesitas activar JavaScript. La idea de la lección está aquí arriba.</p></noscript>
 <script id="lesson-data" type="application/json">{{ payload | tojson }}</script>
+{% endif %}
 {% endblock %}
-{% block scripts %}<script src="/js/lesson.js"></script>{% endblock %}
+{% block scripts %}
+{% if not locked %}
+<script src="/js/figures.js?v=2"></script>
+<script src="/js/lesson.js?v=6"></script>
+{% endif %}
+{% endblock %}

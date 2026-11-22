@@ -32,12 +32,17 @@ El filtro de grado muestra solo las lecciones de ese grado. El contenido está e
 
 ## Supabase
 
+El ingreso es un código de 6 números al correo del representante. En el registro también van el nombre del estudiante, su grado y la institución. Ese grado abre sus lecciones; las de otros grados se ven bloqueadas hasta que el representante elige verlas.
+
 1. Crea un proyecto en Supabase.
 2. Ejecuta `supabase/schema.sql` en el editor SQL.
-3. Copia `.env.example` a `.env` y completa `SUPABASE_URL` y `SUPABASE_SERVICE_ROLE_KEY`.
-4. Arranca el servidor con esas variables. En Vercel se cargan en los ajustes del proyecto, no en el navegador.
+3. En Authentication → Email Templates → Magic Link, muestra el código: `Tu código de MatiLab es {{ .Token }}`.
+4. Copia `.env.example` a `.env` y completa `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
+5. Arranca el servidor con esas variables. En Vercel se cargan en los ajustes del proyecto, no en el navegador.
 
-La clave es la **service role**. No uses la clave anónima ni la publiques en el cliente. Las tablas tienen RLS activado y no hay políticas públicas: solo el servidor entra.
+Sin esas claves, MatiLab sigue funcionando: el código aparece en la pantalla de entrada y los datos viven en la memoria del proceso. La racha cuenta un día de Venezuela cuando el estudiante responde al menos una práctica.
+
+La service role no debe publicarse. Las tablas tienen RLS activado y no hay políticas públicas: solo el servidor entra.
 
 ## Vercel
 
@@ -47,7 +52,7 @@ El proyecto es una app FastAPI. Vercel detecta `app/main.py`. Los archivos de `p
 vercel
 ```
 
-En el proyecto de Vercel agrega las dos variables de Supabase y vuelve a desplegar.
+En el proyecto de Vercel agrega las variables de Supabase y vuelve a desplegar.
 
 ## Pruebas
 
