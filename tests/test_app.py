@@ -39,9 +39,26 @@ def test_inicio_muestra_el_repertorio(client):
     assert response.status_code == 200
     for title in ("Aritmética", "Fracciones", "Geometría", "Razonamiento lógico"):
         assert title in response.text
-    assert "Mi progreso" in response.text
+    assert 'href="/conocenos"' in response.text
+    assert "Mi progreso" not in response.text
     assert "Filtrar por grado" not in response.text
     assert "Sumar con llevadas" in client.get("/modulos/aritmetica").text
+
+
+def test_conocenos_presenta_el_proyecto_y_el_equipo(client):
+    response = client.get("/conocenos")
+    assert response.status_code == 200
+    assert "Conócenos" in response.text
+    assert "Luis Chávez" in response.text
+    assert "Humberto Fernández Morán" in response.text
+    assert "tres integrantes" in response.text
+    assert "/img/unc-grupo.jpg" in response.text
+    assert "/img/unc-aula.jpg" in response.text
+    assert "/img/unc-campus.png" in response.text
+    login(client, grade=3)
+    home = client.get("/")
+    links = re.search(r'class="nav-links">(.*?)</div>', home.text, re.S).group(1)
+    assert links.index("Mi progreso") < links.index("Conócenos")
 
 
 def test_filtro_de_sexto_oculta_la_suma(client):

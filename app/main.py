@@ -285,6 +285,11 @@ def progress_page(request: Request, grado: str | None = None):
     )
 
 
+@app.get("/conocenos", response_class=HTMLResponse)
+def about_page(request: Request):
+    return render(request, "about.html", {"page": "about", "grade": None})
+
+
 @app.get("/entrar", response_class=HTMLResponse)
 def enter_page(request: Request):
     if read_session(request.cookies.get(COOKIE)):
@@ -511,3 +516,4 @@ async def not_found(request: Request, _exc: HTTPException):
 if not os.getenv("VERCEL"):
     app.mount("/css", StaticFiles(directory=PUBLIC_DIR / "css"), name="css")
     app.mount("/js", StaticFiles(directory=PUBLIC_DIR / "js"), name="js")
+    app.mount("/img", StaticFiles(directory=PUBLIC_DIR / "img"), name="img")

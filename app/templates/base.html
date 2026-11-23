@@ -2,7 +2,7 @@
 <html lang="es">
 <head>
   <meta charset="utf-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
   <title>{% block title %}MatiLab{% endblock %}</title>
   <meta name="description" content="MatiLab: práctica de matemáticas para 3.º a 6.º grado. Aritmética, fracciones, geometría y razonamiento.">
   <meta name="theme-color" content="#f5f3f1">
@@ -10,7 +10,7 @@
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,500&family=Inter:wght@400;500&display=swap" rel="stylesheet">
-  <link rel="stylesheet" href="/css/app.css?v=7">
+  <link rel="stylesheet" href="/css/app.css?v=19">
 </head>
 <body>
   <a class="skip" href="#contenido">Saltar al contenido</a>
@@ -24,7 +24,10 @@
       </a>
       <div class="nav-links">
         <a class="{% if page == 'home' %}is-current{% endif %}" href="/{{ grade_qs }}">Módulos</a>
+        {% if viewer %}
         <a class="{% if page == 'progress' %}is-current{% endif %}" href="/progreso">Mi progreso</a>
+        {% endif %}
+        <a class="{% if page == 'about' %}is-current{% endif %}" href="/conocenos">Conócenos</a>
       </div>
       <a class="streak {% if viewer and viewer.streak %}is-live{% else %}is-idle{% endif %}" id="streak-link" href="{% if viewer %}/progreso{% else %}/entrar{% endif %}" aria-label="{% if viewer %}Racha de {{ viewer.streak }} días{% else %}Entrar{% endif %}">
         <svg viewBox="0 0 24 24" aria-hidden="true"><path fill="currentColor" d="M12 2c1 3 1.2 4.6-.2 6.4 1.6-.4 2.7-1.6 3.2-3.2 2.2 1.6 3.5 4 3.5 6.6A6.5 6.5 0 1 1 8.2 6.2C9.4 7.6 10.2 8.4 10.6 9.6 10.2 7.2 11 4.2 12 2z"/></svg>
@@ -36,8 +39,7 @@
     {% block content %}{% endblock %}
   </main>
   <footer class="footer">
-    <strong>MatiLab</strong>
-    <p>{{ numbers.modules }} módulos · {{ numbers.lessons }} lecciones · {{ numbers.problems }} prácticas</p>
+    <p><strong>MatiLab</strong> · Hecho con ♥ desde Venezuela</p>
   </footer>
   <script id="session-data" type="application/json">{{ viewer | tojson }}</script>
   <script src="/js/app.js?v=5"></script>

@@ -30,24 +30,32 @@
     const y1 = cy + radius * Math.sin(end);
     return (
       '<path d="M ' + cx + " " + cy +
-      " L " + x0.toFixed(1) + " " + y0.toFixed(1) +
+      " L " + x0.toFixed(2) + " " + y0.toFixed(2) +
       " A " + radius + " " + radius + " 0 " + large + " 1 " +
-      x1.toFixed(1) + " " + y1.toFixed(1) +
-      ' Z" fill="' + color + '" stroke="' + PAPER + '" stroke-width="3"/>'
+      x1.toFixed(2) + " " + y1.toFixed(2) +
+      ' Z" fill="' + color + '"/>'
     );
   }
 
   function pie(parts, filled, cx, cy, radius) {
+    const stroke = Math.max(1.4, Math.min(3, radius * 0.04)).toFixed(2);
     if (parts <= 1) {
-      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + (filled ? FILL : PAPER) + '" stroke="' + INK + '" stroke-width="3"/>';
+      return '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + (filled ? FILL : PAPER) + '" stroke="' + INK + '" stroke-width="' + stroke + '"/>';
     }
-    let body = '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + PAPER + '" stroke="' + INK + '" stroke-width="3"/>';
+    const shown = Math.max(0, Math.min(filled, parts));
+    let body = '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="' + PAPER + '"/>';
+    for (let index = 0; index < shown; index += 1) {
+      const start = -Math.PI / 2 + (index * 2 * Math.PI) / parts - 0.01;
+      const end = start + (2 * Math.PI) / parts + 0.02;
+      body += slice(cx, cy, radius, start, end, FILL);
+    }
     for (let index = 0; index < parts; index += 1) {
-      const start = -Math.PI / 2 + (index * 2 * Math.PI) / parts;
-      const end = start + (2 * Math.PI) / parts;
-      body += slice(cx, cy, radius - 1.5, start, end, index < filled ? FILL : PAPER);
+      const angle = -Math.PI / 2 + (index * 2 * Math.PI) / parts;
+      const x = cx + radius * Math.cos(angle);
+      const y = cy + radius * Math.sin(angle);
+      body += '<line x1="' + cx + '" y1="' + cy + '" x2="' + x.toFixed(2) + '" y2="' + y.toFixed(2) + '" stroke="' + INK + '" stroke-width="' + stroke + '" stroke-linecap="round"/>';
     }
-    body += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="none" stroke="' + INK + '" stroke-width="3"/>';
+    body += '<circle cx="' + cx + '" cy="' + cy + '" r="' + radius + '" fill="none" stroke="' + INK + '" stroke-width="' + stroke + '"/>';
     return body;
   }
 
@@ -287,21 +295,25 @@
     const filled = Number(match[1]);
     const parts = Number(match[2]);
     if (!parts || filled < 0) return "";
+    const radius = 22;
+    const pad = 4;
     if (filled <= parts) {
-      return '<svg viewBox="0 0 36 36" aria-hidden="true">' + pie(parts, filled, 18, 18, 14) + "</svg>";
+      const size = radius * 2 + pad * 2;
+      return '<svg viewBox="0 0 ' + size + " " + size + '" aria-hidden="true">' + pie(parts, filled, size / 2, size / 2, radius) + "</svg>";
     }
     const wholes = Math.floor(filled / parts);
     const rest = filled % parts;
     const count = wholes + (rest ? 1 : 0);
-    const radius = count <= 2 ? 14 : 11;
-    const step = radius * 2 + 6;
-    const width = 4 + count * step - 6;
+    const gap = 10;
+    const step = radius * 2 + gap;
+    const width = pad * 2 + count * radius * 2 + (count - 1) * gap;
+    const height = radius * 2 + pad * 2;
     let body = "";
     for (let index = 0; index < count; index += 1) {
-      const cx = 2 + radius + index * step;
-      body += index < wholes ? pie(1, 1, cx, 18, radius) : pie(parts, rest, cx, 18, radius);
+      const cx = pad + radius + index * step;
+      body += index < wholes ? pie(1, 1, cx, height / 2, radius) : pie(parts, rest, cx, height / 2, radius);
     }
-    return '<svg viewBox="0 0 ' + width + ' 36" aria-hidden="true">' + body + "</svg>";
+    return '<svg viewBox="0 0 ' + width + " " + height + '" aria-hidden="true">' + body + "</svg>";
   }
 
   window.MatiLabFigures = { draw: draw, miniPie: miniPie };
