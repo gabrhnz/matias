@@ -55,6 +55,8 @@
       solved: state.solved || [],
       correct: state.correct || [],
       completed: Boolean(state.completed),
+      score: Number(state.score) || 0,
+      passed: Boolean(state.passed),
     };
     localStorage.setItem(PROGRESS_KEY, JSON.stringify(all));
     paint();
@@ -107,6 +109,21 @@
     paint();
   }
 
+  const PASS = 75;
+
+  function lessonScore(state, total) {
+    if (!state) return 0;
+    if (typeof state.score === "number" && state.completed) return state.score;
+    if (!total) return 0;
+    return Math.round(((state.correct || []).length / total) * 100);
+  }
+
+  function lessonPassed(state, total) {
+    if (!state || !state.completed) return false;
+    if (typeof state.passed === "boolean") return state.passed;
+    return lessonScore(state, total) >= PASS;
+  }
+
   function paint() {
     const all = loadProgress();
     document.querySelectorAll("[data-lesson]").forEach(function (node) {
@@ -114,9 +131,10 @@
       const total = Number(node.dataset.total || 0);
       const slot = node.querySelector("[data-status]");
       if (!state) return;
-      node.classList.toggle("is-complete", Boolean(state.completed));
+      const passed = lessonPassed(state, total);
+      node.classList.toggle("is-complete", passed);
       if (!slot) return;
-      if (state.completed) slot.textContent = state.correct.length + " de " + total;
+      if (state.completed) slot.textContent = lessonScore(state, total) + " sobre 100";
       else if (state.solved.length) slot.textContent = state.solved.length + " de " + total;
     });
     document.querySelectorAll("[data-module]").forEach(function (section) {
@@ -124,12 +142,16 @@
       let done = 0;
       items.forEach(function (item) {
         const state = all[item.dataset.lesson];
-        if (state && state.completed) done += 1;
+        if (lessonPassed(state, Number(item.dataset.total || 0))) done += 1;
       });
       const bar = section.querySelector("[data-bar]");
       const label = section.querySelector("[data-module-label]");
       if (bar) bar.style.width = items.length ? (done / items.length) * 100 + "%" : "0";
-      if (label) label.textContent = items.length ? done + " de " + items.length : "Otro grado";
+      if (label) {
+        if (!items.length) label.textContent = "Otro grado";
+        else if (done === items.length) label.textContent = "Aprobado";
+        else label.textContent = done + " de " + items.length + " aprobadas";
+      }
     });
     const lessons = document.getElementById("stat-lessons");
     if (lessons) {

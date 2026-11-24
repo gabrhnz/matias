@@ -5,7 +5,7 @@ import pytest
 from fastapi.testclient import TestClient
 
 from app.auth import reset as reset_auth
-from app.catalog import lesson_by_id, next_lesson, stats
+from app.catalog import TRIAL, lesson_by_id, next_lesson, stats
 from app.main import app
 from app.store import store
 
@@ -50,8 +50,8 @@ def test_conocenos_presenta_el_proyecto_y_el_equipo(client):
     assert response.status_code == 200
     assert "Conócenos" in response.text
     assert "Luis Chávez" in response.text
-    assert "Humberto Fernández Morán" in response.text
-    assert "tres integrantes" in response.text
+    assert "Compromiso de la UNC" in response.text
+    assert "UNC somos todos" in response.text
     assert "/img/unc-grupo.jpg" in response.text
     assert "/img/unc-aula.jpg" in response.text
     assert "/img/unc-campus.png" in response.text
@@ -59,6 +59,34 @@ def test_conocenos_presenta_el_proyecto_y_el_equipo(client):
     home = client.get("/")
     links = re.search(r'class="nav-links">(.*?)</div>', home.text, re.S).group(1)
     assert links.index("Mi progreso") < links.index("Conócenos")
+
+
+def test_empezar_abre_una_prueba_y_luego_el_registro(client):
+    home = client.get("/")
+    assert 'href="/prueba"' in home.text
+    page = client.get("/prueba")
+    assert page.status_code == 200
+    assert "Crear cuenta" in page.text
+    match = re.search(r'id="trial-data" type="application/json">(.*?)</script>', page.text)
+    payload = json.loads(match.group(1))
+    assert [item["id"] for item in payload] == [problem.id for problem in TRIAL]
+    assert "answers" not in payload[0]
+    assert "explain" not in payload[0]
+    first = TRIAL[0]
+    right = client.post("/api/prueba", json={"problem_id": first.id, "answer": first.answers[0]})
+    assert right.json()["correct"] is True
+    wrong = client.post("/api/prueba", json={"problem_id": first.id, "answer": "0"})
+    assert wrong.status_code == 200
+    assert wrong.json()["correct"] is False
+    assert wrong.json()["explain"] == ""
+    assert client.post("/api/prueba", json={"problem_id": "no-existe", "answer": "1"}).status_code == 404
+    login(client)
+    entered = client.get("/")
+    assert 'href="/prueba"' not in entered.text
+    assert "/leccion/" in entered.text
+    redirect = client.get("/prueba", follow_redirects=False)
+    assert redirect.status_code == 303
+    assert redirect.headers["location"].startswith("/leccion/")
 
 
 def test_filtro_de_sexto_oculta_la_suma(client):
@@ -117,8 +145,60 @@ def test_la_leccion_se_completa_al_responder_todas(client):
             },
         )
     assert last.json()["progress"]["completed"] is True
+    assert last.json()["progress"]["score"] == 100
+    assert last.json()["progress"]["passed"] is True
     progress = client.get(f"/api/progreso/{student}")
     assert progress.json()["lessons"][lesson.id]["completed"] is True
+    assert progress.json()["lessons"][lesson.id]["passed"] is True
+
+
+def test_el_modulo_pide_al_menos_75(client):
+    lesson = lesson_by_id("sumar-con-llevadas")
+    student = "33333333-3333-4333-8333-333333333333"
+    last = None
+    for index, problem in enumerate(lesson.problems):
+        answer = problem.answers[0] if index < 3 else "0"
+        last = client.post(
+            "/api/comprobar",
+            json={
+                "student_id": student,
+                "name": "Luis",
+                "grade": 3,
+                "lesson_id": lesson.id,
+                "problem_id": problem.id,
+                "answer": answer,
+            },
+        )
+    assert last.json()["progress"]["score"] == 75
+    assert last.json()["progress"]["passed"] is True
+    short = client.post(
+        "/api/comprobar",
+        json={
+            "student_id": "44444444-4444-4444-8444-444444444444",
+            "name": "Ana",
+            "grade": 3,
+            "lesson_id": lesson.id,
+            "problem_id": lesson.problems[0].id,
+            "answer": "0",
+        },
+    )
+    for problem in lesson.problems[1:]:
+        short = client.post(
+            "/api/comprobar",
+            json={
+                "student_id": "44444444-4444-4444-8444-444444444444",
+                "name": "Ana",
+                "grade": 3,
+                "lesson_id": lesson.id,
+                "problem_id": problem.id,
+                "answer": "0",
+            },
+        )
+    assert short.json()["progress"]["completed"] is True
+    assert short.json()["progress"]["score"] == 0
+    assert short.json()["progress"]["passed"] is False
+    page = client.get("/modulos/aritmetica")
+    assert "75 sobre 100" in page.text
 
 
 def test_fraccion_acepta_equivalente(client):
@@ -201,7 +281,7 @@ def test_la_racha_sigue_el_dia(client, monkeypatch):
 
 def test_el_registro_guarda_representante_y_grado(client):
     page = client.get("/entrar")
-    assert "Representante" in page.text
+    assert "Nombre del representante" in page.text
     assert "Institución" in page.text
     student = login(
         client,

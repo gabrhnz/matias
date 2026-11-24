@@ -410,8 +410,39 @@ main {
 .feedback.is-soft { background: var(--peach); }
 .feedback p:first-child { color: var(--ink); font-weight: 500; margin-bottom: 6px; }
 .feedback.is-soft p { color: var(--ink); }
-.done { grid-column: 2; }
+.done {
+  grid-column: 2;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-start;
+  padding: 32px 32px 28px;
+}
+.done .eyebrow { margin-bottom: 14px; }
+.done h2 { font-size: 26px; }
+.done #score {
+  font-family: var(--sans);
+  font-size: 18px;
+  font-weight: 500;
+  letter-spacing: 0;
+  color: var(--ink);
+  line-height: 1.4;
+  margin: 16px 0 0;
+}
+.done #pass-note { max-width: 36rem; }
+.done .hero-actions { margin-top: 28px; }
+[data-module] > .quiet-copy { margin: 20px 0 0; }
+[data-module] > .meta:empty { display: none; }
 .page-head .btn { margin-top: 20px; }
+.trial-wrap {
+  width: min(640px, 100%);
+  margin: 24px auto;
+  display: grid;
+  gap: 12px;
+}
+.trial-note { text-align: center; }
+.trial-wrap .practice { background: #fff; border: 1px solid var(--line); padding: 28px; border-radius: 20px; box-shadow: var(--shadow); }
+.trial-wrap .feedback .btn { margin-top: 12px; width: 100%; }
+
 .auth-card {
   width: min(440px, 100%);
   margin: 24px auto;
@@ -423,7 +454,7 @@ main {
   display: grid;
   gap: 16px;
 }
-.auth-card h1 { font-size: clamp(36px, 5vw, 48px); }
+.auth-card h1 { font-size: clamp(36px, 5vw, 48px); text-align: center; }
 .auth-card .stack { color: var(--ink); font-size: 14px; }
 .auth-card form { display: grid; gap: 12px; }
 .auth-card form > .btn { width: 100%; }
@@ -490,13 +521,19 @@ main {
 }
 .dash-stats span { color: var(--muted); font-size: 15px; }
 .field-group { display: grid; gap: 10px; }
-.field-group + .field-group { padding-top: 6px; }
+.field-group + .field-group {
+  margin-top: 8px;
+  padding-top: 20px;
+  border-top: 1px solid var(--line);
+}
 .group-label {
-  margin: 0;
-  font-size: 13px;
-  letter-spacing: 0.04em;
-  text-transform: uppercase;
-  color: var(--faint);
+  margin: 0 0 6px;
+  text-align: center;
+  font-family: var(--serif);
+  font-size: 22px;
+  font-weight: 500;
+  letter-spacing: -0.02em;
+  color: var(--ink);
 }
 .text-link {
   justify-self: center;

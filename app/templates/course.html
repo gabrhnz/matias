@@ -21,10 +21,13 @@
 {% if not lessons %}
 <p class="empty-note">Este grado no tiene lecciones en {{ module.title }}.</p>
 {% endif %}
+<div data-module="{{ module.slug }}">
+<p class="quiet-copy">Cada lección se aprueba con 75 sobre 100.</p>
+<p class="meta" data-module-label></p>
 <ol class="lesson-path">
   {% for lesson in lessons %}
   {% set mine = not viewer or viewer.grade in lesson.grades %}
-  <li class="{% if not mine and not repaso %}is-locked{% elif not mine %}is-extra{% endif %}" data-lesson="{{ lesson.id }}" data-total="{{ lesson.problems|length }}">
+  <li class="{% if not mine and not repaso %}is-locked{% elif not mine %}is-extra{% endif %}" data-lesson="{{ lesson.id }}" data-total="{{ lesson.problems|length }}" data-program="{{ 0 if viewer and viewer.grade not in lesson.grades else 1 }}">
     {% if mine or repaso %}
     <a href="/leccion/{{ lesson.id }}{% if not mine %}?repaso=1{% endif %}">
       <span class="path-index">{{ loop.index }}</span>
@@ -43,4 +46,5 @@
   </li>
   {% endfor %}
 </ol>
+</div>
 {% endblock %}

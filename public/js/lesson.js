@@ -27,10 +27,10 @@
   let busy = false;
   let answered = false;
   let pendingNext = null;
-  let advanceTimer = 0;
   let leaving = false;
   const session = [];
   let exampleDrawn = false;
+  let lastProgress = null;
 
   function problem() {
     const id = order[step];
@@ -62,7 +62,6 @@
   }
 
   function render() {
-    window.clearTimeout(advanceTimer);
     const item = problem();
     picked = "";
     answered = false;
@@ -82,6 +81,7 @@
     hintButton.hidden = !item.hint;
     numberField.hidden = item.kind !== "number";
     numberInput.value = "";
+    numberInput.disabled = false;
     numberInput.classList.remove("is-miss");
     if (item.kind === "choice") {
       item.choices.forEach(function (choice) {
@@ -141,8 +141,11 @@
       if (!response.ok) throw new Error(result.detail || "No pudimos comprobar");
       answered = true;
       session.push(Boolean(result.correct));
+      if (result.progress) {
+        lastProgress = result.progress;
+        window.MatiLab.remember(data.id, result.progress);
+      }
       showResult(result);
-      if (result.progress) window.MatiLab.remember(data.id, result.progress);
       if (typeof result.streak === "number") window.MatiLab.setStreak(result.streak);
     } catch (error) {
       busy = false;
@@ -165,21 +168,24 @@
       feedbackBody.textContent = result.explain;
     } else {
       feedback.classList.add("is-soft");
-      feedbackTitle.textContent = "¡Vaya!";
-      feedbackBody.textContent = "Esta vez esa no es la correcta. Veamos si en la siguiente sí.";
-      advanceTimer = window.setTimeout(goNext, 1700);
+      feedbackTitle.textContent = "Incorrecto";
+      feedbackBody.textContent = result.explain;
     }
     nextButton.hidden = false;
-    nextButton.textContent = pendingNext ? "Siguiente" : "Ver resultado";
+    nextButton.textContent = "Seguir";
+    choices.querySelectorAll(".choice").forEach(function (node) {
+      node.disabled = true;
+    });
+    numberInput.disabled = true;
     const selected = choices.querySelector(".is-picked");
     if (selected) selected.classList.add(result.correct ? "is-right" : "is-miss");
     if (!result.correct && problem().kind === "number") numberInput.classList.add("is-miss");
+    nextButton.focus();
   }
 
   function goNext() {
-    if (leaving) return;
+    if (leaving || !answered) return;
     leaving = true;
-    window.clearTimeout(advanceTimer);
     const nextId = pendingNext;
     pendingNext = null;
     if (!nextId || order.indexOf(nextId) !== -1) {
@@ -193,11 +199,31 @@
   }
 
   function finish() {
-    window.clearTimeout(advanceTimer);
     practice.hidden = true;
     done.hidden = false;
     const correctCount = session.filter(Boolean).length;
-    score.textContent = "Acertaste " + correctCount + " de " + session.length + " en este intento.";
+    const fallback = session.length ? Math.round((correctCount / session.length) * 100) : 0;
+    const points = lastProgress && typeof lastProgress.score === "number" ? lastProgress.score : fallback;
+    const needed = data.passScore || 75;
+    const passed = points >= needed;
+    score.textContent = points + " sobre 100";
+    const note = document.getElementById("pass-note");
+    const ids = data.moduleLessonIds || [];
+    const saved = window.MatiLab.loadProgress();
+    const moduleOk = ids.length > 0 && ids.every(function (id) {
+      if (id === data.id) return passed;
+      const state = saved[id];
+      return Boolean(state && state.passed);
+    });
+    if (moduleOk) note.textContent = "Aprobaste el módulo.";
+    else if (passed) note.textContent = "Aprobaste esta lección. El módulo pide 75 sobre 100 en cada una.";
+    else note.textContent = "Para aprobar el módulo necesitas al menos 75 sobre 100.";
+    if (!passed) {
+      nextLink.hidden = false;
+      nextLink.href = "/leccion/" + data.id + (data.gradeQs || "");
+      nextLink.textContent = "Intentar otra vez";
+      return;
+    }
     if (data.nextId) {
       nextLink.hidden = false;
       nextLink.href = "/leccion/" + data.nextId + data.gradeQs;

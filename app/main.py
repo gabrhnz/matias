@@ -25,6 +25,8 @@ from app.catalog import (
     public_problem,
     repertorio,
     stats,
+    trial_problem,
+    TRIAL,
     visible_lessons,
 )
 from app.store import clean_grade, clean_label, clean_name, store, valid_student_id
@@ -45,6 +47,11 @@ class StudentIn(BaseModel):
 class HistoryItem(BaseModel):
     id: str = Field(max_length=80)
     correct: bool
+
+
+class TrialIn(BaseModel):
+    problem_id: str = Field(max_length=80)
+    answer: str = Field(max_length=40)
 
 
 class CheckIn(BaseModel):
@@ -195,6 +202,7 @@ def home(request: Request, grado: str | None = None):
     viewer = current_viewer(request)
     start_grade = grade or (viewer["grade"] if viewer else None)
     _module, lesson = first_lesson(start_grade)
+    lesson_url = f"/leccion/{lesson.id}" + (f"?grado={grade}" if grade else "")
     return render(
         request,
         "home.html",
@@ -203,7 +211,7 @@ def home(request: Request, grado: str | None = None):
             "grade": grade,
             "grade_action": "/",
             "modules": repertorio(grade)["modules"],
-            "start_url": f"/leccion/{lesson.id}" + (f"?grado={grade}" if grade else ""),
+            "start_url": lesson_url if viewer else "/prueba",
         },
     )
 
@@ -254,6 +262,8 @@ def lesson_page(request: Request, lesson_id: str, grado: str | None = None):
         "problems": [public_problem(problem) for problem in lesson.problems],
         "exampleScene": lesson.example_scene,
         "startProblemId": lesson.problems[opening_index(levels_for(len(lesson.problems)))].id,
+        "passScore": 75,
+        "moduleLessonIds": [item.id for item in (visible_lessons(module, grade) if grade else module.lessons)],
     }
     return render(
         request,
@@ -288,6 +298,34 @@ def progress_page(request: Request, grado: str | None = None):
 @app.get("/conocenos", response_class=HTMLResponse)
 def about_page(request: Request):
     return render(request, "about.html", {"page": "about", "grade": None})
+
+
+@app.get("/prueba", response_class=HTMLResponse)
+def trial_page(request: Request):
+    viewer = current_viewer(request)
+    if viewer:
+        _module, lesson = first_lesson(viewer["grade"])
+        return RedirectResponse(f"/leccion/{lesson.id}", status_code=303)
+    return render(
+        request,
+        "prueba.html",
+        {
+            "page": "trial",
+            "grade": None,
+            "problems": [public_problem(problem) for problem in TRIAL],
+        },
+    )
+
+
+@app.post("/api/prueba")
+def check_trial(body: TrialIn):
+    if not body.answer.strip():
+        raise HTTPException(status_code=400, detail="Elige una respuesta")
+    problem = trial_problem(body.problem_id)
+    if problem is None:
+        raise HTTPException(status_code=404, detail="No encontramos esa práctica")
+    correct = is_correct(problem, body.answer)
+    return {"correct": correct, "explain": problem.explain if correct else ""}
 
 
 @app.get("/entrar", response_class=HTMLResponse)

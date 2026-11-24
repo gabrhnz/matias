@@ -263,11 +263,15 @@ class Store:
         solved_list = [problem_id for problem_id in order if problem_id in solved and problem_id in known]
         correct_list = [problem_id for problem_id in order if problem_id in correct and problem_id in known]
         total = len(order)
+        completed = total > 0 and len(solved_list) >= total
+        score = round(len(correct_list) * 100 / total) if total else 0
         return {
             "lesson_id": lesson_id,
             "solved": solved_list,
             "correct": correct_list,
-            "completed": total > 0 and len(solved_list) >= total,
+            "completed": completed,
+            "score": score,
+            "passed": completed and score >= 75,
             "total": total,
         }
 
@@ -356,6 +360,8 @@ class Store:
                 "solved": state["solved"],
                 "correct": state["correct"],
                 "completed": state["completed"],
+                "score": state["score"],
+                "passed": state["passed"],
             }
         student = None
         if students:

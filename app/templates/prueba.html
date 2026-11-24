@@ -1,0 +1,27 @@
+{% extends "base.html" %}
+{% block title %}Prueba · MatiLab{% endblock %}
+{% block content %}
+<section class="trial-wrap">
+  <p class="trial-note">Tres preguntas. Al terminar, creas tu cuenta.</p>
+  <section class="practice" id="practice" aria-labelledby="prompt">
+    <div class="practice-top">
+      <p id="step-label">Prueba 1 de 3</p>
+      <div class="bar" aria-hidden="true"><span id="step-bar"></span></div>
+    </div>
+    <h1 id="prompt" class="prompt" tabindex="-1"></h1>
+    <div id="choices" class="choices"></div>
+    <div id="feedback" class="feedback" hidden aria-live="polite">
+      <p id="feedback-title"></p>
+      <p id="feedback-body"></p>
+      <button type="button" class="btn primary" id="next-btn">Siguiente</button>
+    </div>
+  </section>
+</section>
+<noscript>
+  <p class="empty-note">Para hacer la prueba necesitas activar JavaScript. <a href="/entrar">Crear cuenta</a></p>
+</noscript>
+<script id="trial-data" type="application/json">{{ problems | tojson }}</script>
+{% endblock %}
+{% block scripts %}
+<script src="/js/prueba.js?v=1"></script>
+{% endblock %}

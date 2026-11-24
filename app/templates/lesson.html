@@ -53,6 +53,7 @@
     <p class="eyebrow">Lección completa</p>
     <h2>Listo</h2>
     <p id="score"></p>
+    <p id="pass-note" class="quiet-copy"></p>
     <div class="hero-actions">
       <a class="btn primary" id="next-link" hidden>Siguiente lección</a>
       <a class="btn quiet" href="/modulos/{{ module.slug }}{{ grade_qs }}">Volver al módulo</a>
@@ -66,6 +67,6 @@
 {% block scripts %}
 {% if not locked %}
 <script src="/js/figures.js?v=3"></script>
-<script src="/js/lesson.js?v=6"></script>
+<script src="/js/lesson.js?v=8"></script>
 {% endif %}
 {% endblock %}
