@@ -1,7 +1,4 @@
-"""Figuras de las prácticas de fracciones y geometría.
-
-Cada escena la dibuja el navegador. Aquí solo va qué se pinta y la pregunta corta.
-"""
+"""Escenas de fracciones y geometría. El navegador las dibuja."""
 
 from __future__ import annotations
 

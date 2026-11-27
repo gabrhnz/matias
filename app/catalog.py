@@ -1,8 +1,4 @@
-"""Repertorio de MatiLab: cuatro módulos para 3.º a 6.º grado.
-
-El contenido vive en código en esta primera versión. Así se puede revisar,
-corregir y presentar sin un panel de administración.
-"""
+"""Repertorio de MatiLab: cuatro módulos para 3.º a 6.º grado."""
 
 from __future__ import annotations
 

@@ -2,19 +2,9 @@
 
 Práctica de matemáticas para 3.º a 6.º grado. El niño elige un módulo, resuelve cuatro ejercicios y ve en el momento si acertó.
 
-**Sitio:** [matiaslab.vercel.app](https://matiaslab.vercel.app)  
-**Guion de la presentación:** [presentacion.md](presentacion.md)
+**Sitio:** [matiaslab.vercel.app](https://matiaslab.vercel.app)
 
-Hecho en la Universidad Nacional de las Ciencias. Las bases de la escuela sostienen lo que después se estudia, y MatiLab pone esas bases a practicar.
-
-## Equipo
-
-| | |
-| --- | --- |
-| Gabriel | Desarrollo |
-| María Belinda | Diseño y frontend |
-| Carol | Contenido y pedagogía |
-| Gure | Pruebas, errores y soluciones |
+Hecho en la Universidad Nacional de las Ciencias.
 
 ## Qué hay
 
@@ -35,8 +25,8 @@ Quien todavía no tiene cuenta responde tres preguntas y, al terminar, crea la c
 
 Cada ejercicio vale lo mismo. Uno bien de cuatro es 25 sobre 100. Tres bien son 75.
 
-- Una lección se aprueba con **al menos 75 sobre 100**.
-- Un módulo se aprueba cuando **cada lección de ese grado** llega a 75. No hay promedio.
+- Una lección se aprueba con al menos 75 sobre 100.
+- Un módulo se aprueba cuando cada lección de ese grado llega a 75.
 - Si no llega, el botón es «Intentar otra vez». Repetir solo puede subir el puntaje guardado.
 - El resultado no avanza solo: se queda en Correcto o Incorrecto hasta pulsar Seguir.
 
@@ -46,10 +36,8 @@ La respuesta correcta no viaja al navegador. El niño envía lo que eligió y el
 
 1. De los cuatro ejercicios, se empieza por uno normal. Dos errores seguidos bajan a uno más fácil. Tres aciertos seguidos cierran con uno más difícil.
 2. El grado se cumple en el servidor. Escribir la dirección de una lección de otro grado no deja responderla, salvo que se pida el repaso.
-3. El ingreso es un código de **8 dígitos** que Supabase envía al correo del representante.
+3. El ingreso es un código de 8 dígitos que Supabase envía al correo del representante.
 4. La racha cuenta un día de Venezuela si el estudiante respondió al menos un ejercicio.
-
-El detalle, y lo que explica cada quien, está en [presentacion.md](presentacion.md).
 
 ## Stack
 
