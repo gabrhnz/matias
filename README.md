@@ -1,12 +1,72 @@
 # MatiLab
 
-Práctica de matemáticas para 3.º a 6.º grado. Cuatro módulos —aritmética, fracciones, geometría y razonamiento lógico— con 32 lecciones y 128 ejercicios. Cada lección explica una idea, muestra un ejemplo y corrige al instante.
+Práctica de matemáticas para 3.º a 6.º grado. El niño elige un módulo, resuelve cuatro ejercicios y ve en el momento si acertó.
 
-La interfaz usa la estética de un curso visual: fondo cálido, títulos en serif, controles en pastilla, un verde para la acción principal e ilustraciones propias. El nombre, los dibujos y los problemas son de MatiLab.
+**Sitio:** [matiaslab.vercel.app](https://matiaslab.vercel.app)  
+**Guion de la presentación:** [presentacion.md](presentacion.md)
 
-## Cómo verla
+Hecho en la Universidad Nacional de las Ciencias. Las bases de la escuela sostienen lo que después se estudia, y MatiLab pone esas bases a practicar.
 
-Hace falta Python 3.12 o más nuevo. En esta máquina sirve `python3.13`.
+## Equipo
+
+| | |
+| --- | --- |
+| Gabriel | Desarrollo |
+| María Belinda | Diseño y frontend |
+| Carol | Contenido y pedagogía |
+| Gure | Pruebas, errores y soluciones |
+
+## Qué hay
+
+Cuatro módulos, 32 lecciones y 128 ejercicios. Cada lección trae una idea corta, un ejemplo y una pista. La pista empuja sin dar la respuesta.
+
+| Módulo | Qué practica |
+| --- | --- |
+| Aritmética | Sumas, restas, tablas, multiplicación, división y problemas |
+| Fracciones | Partes de un entero, comparar, sumar, restar y números mixtos |
+| Geometría | Figuras, perímetro, área, ángulos y volumen |
+| Razonamiento lógico | Patrones, verdadero o falso, clasificar y deducir |
+
+La cuenta la crea el representante: su nombre, su correo, y después el nombre del estudiante, el grado y la escuela. El estudiante practica las lecciones de su grado. Las demás se pueden ver como repaso, sin cambiar el grado de la cuenta.
+
+Quien todavía no tiene cuenta responde tres preguntas y, al terminar, crea la cuenta.
+
+## Cómo se aprueba
+
+Cada ejercicio vale lo mismo. Uno bien de cuatro es 25 sobre 100. Tres bien son 75.
+
+- Una lección se aprueba con **al menos 75 sobre 100**.
+- Un módulo se aprueba cuando **cada lección de ese grado** llega a 75. No hay promedio.
+- Si no llega, el botón es «Intentar otra vez». Repetir solo puede subir el puntaje guardado.
+- El resultado no avanza solo: se queda en Correcto o Incorrecto hasta pulsar Seguir.
+
+## Cómo funciona
+
+La respuesta correcta no viaja al navegador. El niño envía lo que eligió y el servidor dice si está bien.
+
+1. De los cuatro ejercicios, se empieza por uno normal. Dos errores seguidos bajan a uno más fácil. Tres aciertos seguidos cierran con uno más difícil.
+2. El grado se cumple en el servidor. Escribir la dirección de una lección de otro grado no deja responderla, salvo que se pida el repaso.
+3. El ingreso es un código de **8 dígitos** que Supabase envía al correo del representante.
+4. La racha cuenta un día de Venezuela si el estudiante respondió al menos un ejercicio.
+
+El detalle, y lo que explica cada quien, está en [presentacion.md](presentacion.md).
+
+## Stack
+
+| Pieza | Para qué |
+| --- | --- |
+| Python y FastAPI | El servidor, las páginas y la corrección |
+| Jinja | El HTML |
+| HTML, CSS y JavaScript | Lo que ve y pulsa el niño |
+| Supabase | La cuenta, el código al correo y el progreso |
+| Vercel | El sitio publicado. Se actualiza con la rama `cursor/matilab-plataforma` |
+| pytest | Las pruebas del repertorio, el puntaje y el bloqueo por grado |
+
+El navegador no habla con la base de datos. Solo habla con MatiLab.
+
+## Cómo correrlo
+
+Hace falta Python 3.12 o más nuevo.
 
 ```bash
 python3.13 -m venv .venv
@@ -17,42 +77,15 @@ uvicorn app.main:app --reload
 
 Abre http://127.0.0.1:8000.
 
-Sin variables de entorno, el progreso queda en el navegador y, mientras el proceso vive, también en memoria. La práctica funciona igual.
+Sin variables de entorno la práctica funciona igual: el código de entrada aparece en la pantalla y el progreso queda en memoria mientras el proceso vive.
 
-## Repertorio
+Para cuentas y progreso de verdad:
 
-| Módulo | Qué practica |
-| --- | --- |
-| Aritmética | Llevadas, préstamo, tablas, multiplicación, división, residuo, orden de operaciones y problemas |
-| Fracciones | Partes, lectura, equivalentes, comparación, suma, resta, fracción de una cantidad y mixtos |
-| Geometría | Figuras, lados, perímetro, áreas, simetría, ángulos y volumen |
-| Razonamiento lógico | Patrones, series, verdadero o falso, deducción, clasificar, caminos, edades y pensar al revés |
+1. Crea un proyecto en Supabase y ejecuta [`supabase/schema.sql`](supabase/schema.sql).
+2. En Authentication → Email Templates → Magic Link, deja el código visible: `Tu código de MatiLab es {{ .Token }}`.
+3. Copia [`.env.example`](.env.example) a `.env` y completa `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
 
-El filtro de grado muestra solo las lecciones de ese grado. El contenido está en `app/catalog.py`.
-
-## Supabase
-
-El ingreso es un código de 6 números al correo del representante. En el registro también van el nombre del estudiante, su grado y la institución. Ese grado abre sus lecciones; las de otros grados se ven bloqueadas hasta que el representante elige verlas.
-
-1. Crea un proyecto en Supabase.
-2. Ejecuta `supabase/schema.sql` en el editor SQL.
-3. En Authentication → Email Templates → Magic Link, muestra el código: `Tu código de MatiLab es {{ .Token }}`.
-4. Copia `.env.example` a `.env` y completa `SUPABASE_URL`, `SUPABASE_ANON_KEY` y `SUPABASE_SERVICE_ROLE_KEY`.
-5. Arranca el servidor con esas variables. En Vercel se cargan en los ajustes del proyecto, no en el navegador.
-
-Sin esas claves, MatiLab sigue funcionando: el código aparece en la pantalla de entrada y los datos viven en la memoria del proceso. La racha cuenta un día de Venezuela cuando el estudiante responde al menos una práctica.
-
-La service role no debe publicarse. Las tablas tienen RLS activado y no hay políticas públicas: solo el servidor entra.
-
-## Vercel
-
-El proyecto es una app FastAPI. Vercel detecta `app/main.py`. Los archivos de `public/` se sirven como estáticos.
-
-```bash
-vercel
-```
-
-En el proyecto de Vercel agrega las variables de Supabase y vuelve a desplegar.
+La service role no se publica. Las tablas tienen RLS activado y no hay políticas públicas: solo el servidor entra. En Vercel esas variables van en los ajustes del proyecto, no en el navegador.
 
 ## Pruebas
 
